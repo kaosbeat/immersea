@@ -3,7 +3,8 @@ import cv2 as cv
 from primesense import openni2#, nite2
 from primesense import _openni2 as c_api
 
-dist ='lib'
+# dist ='lib' ##RPi
+dist = 'OpenNI-MacOSX-x64-2.2/Redist/' ## MACOSX
 openni2.initialize(dist) #
 if (openni2.is_initialized()):
     print ("openNI2 initialized")
@@ -35,12 +36,20 @@ def get_depth():
 # fgbg = cv.bgsegm.createBackgroundSubtractorMOG()
 
 kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE,(3,3))
-fgbg = cv.bgsegm.createBackgroundSubtractorGMG()
+# fgbg = cv.bgsegm.createBackgroundSubtractorGMG()
+# fgbg = cv.bgsegm.createBackgroundSubtractorMOG()
+fgbg = cv.bgsegm.createBackgroundSubtractorCNT()
+
+# fgbg.getBackgroundImage()
+# fgmask	=	cv.bgsegm_BackgroundSubtractorCNT.apply(	image[, fgmask[, learningRate]]	)
+
 
 while(1):
     # ret, frame = cap.read()
     dmap,frame = get_depth()
-    fgmask = fgbg.apply(frame)
+    
+    fgmask = fgbg.apply(frame, None,0.5)
+    # fgmask = fgbg.apply(frame)
     fgmask = cv.morphologyEx(fgmask, cv.MORPH_OPEN, kernel)    
     cv.imshow('frame',fgmask)
     k = cv.waitKey(30) & 0xff

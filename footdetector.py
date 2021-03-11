@@ -33,8 +33,8 @@ from primesense import _openni2 as c_api
 # OMAP
 #dist = '/home/carlos/Install/kinect/OpenNI2-Linux-ARM-2.2/Redist/'
 # Linux
-dist ='lib'
-
+# dist ='lib' ##Rpi arm
+dist = 'OpenNI-MacOSX-x64-2.2/Redist/' ## MACOSX
 ## Initialize openni and check
 openni2.initialize(dist) #
 if (openni2.is_initialized()):
