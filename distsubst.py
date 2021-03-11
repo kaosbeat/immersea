@@ -35,6 +35,24 @@ def get_depth():
 
 
 
+def get_contours(img):
+    
+    img = cv.cvtColor(img,cv.COLOR_GRAY2RGB)
+    
+    ret, bin_img = cv.threshold(img, 23, 255, cv.THRESH_BINARY)
+
+
+    # cnts = cv.findContours(bin_img, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    # cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+    # cnts = sorted(cnts, key=cv2.contourArea, reverse=True)
+    # for c in cnts:
+    #     # print (i, c)
+    #     # Highlight largest contour
+    #     cv.drawContours(newimg, [c], -1, (36,255,12), 3)
+    #     # break
+    # return newimg
+    return bin_img
+
 backdepth, backimg = get_depth()
 # backdepth = backdepth.astype(np.int16)
 # backimg = backimg.astype(np.int16)
@@ -43,7 +61,7 @@ backdepth, backimg = get_depth()
 grayback = cv.cvtColor(backimg,cv.COLOR_BGR2GRAY)
 
 
-print(grayback[350])
+# print(grayback[350])
 back_16 = grayback.astype(np.int16)
 # print(backimg)
 
@@ -82,10 +100,11 @@ dmap,frame = get_depth()
 frame = cv.cvtColor(frame,cv.COLOR_BGR2GRAY)
 frame_16 = frame.astype(np.int16)
 sframe_16 = np.subtract(back_16, frame_16)
-print(sframe_16[350])
+# print(sframe_16[350])
 sframe_16 = abs(sframe_16)
 sframe = sframe_16.astype(np.int8)
-print(sframe[350])
+# print(sframe[350])
+
 
 
 
@@ -113,10 +132,23 @@ while(1):
     frame_16 = frame.astype(np.int16)
     sframe_16 = np.subtract(back_16, frame_16)
     sframe_16 = abs(sframe_16)
+    ### this
+    # img8 = (sframe_16/256).astype('uint8')
+    # result = (img8 > 25 ) * img8
+
+    ### or this
     sframe = sframe_16.astype(np.int8)
     result = (sframe > 25 ) * sframe
-    print(result[350])
+    result = result.astype(np.float32)
+    
+    # cont = cv.cvtColor(result,cv.COLOR_GRAY2RGB)
+
+    # cont = get_contours(result)
+
+    # print(result[350])
     # ret,sframe = cv.threshold(sframe,140,255,cv.THRESH_TOZERO_INV)
+    print(result[350])
+    ret, bin_img = cv.threshold(result, 23, 255, cv.THRESH_BINARY)
 
     cv.imshow('frame',result)
     k = cv.waitKey(30) & 0xff
