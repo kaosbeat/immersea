@@ -3,7 +3,8 @@ import cv2
 from primesense import openni2#, nite2
 from primesense import _openni2 as c_api
 
-dist ='/home/pi/'
+# dist ='/home/pi/'
+dist = 'OpenNI-MacOSX-x64-2.2/Redist/' ## MACOSX
 openni2.initialize(dist) #
 if (openni2.is_initialized()):
     print ("openNI2 initialized")
@@ -30,10 +31,11 @@ def get_depth():
 ## get background image
 backdepth, backimg = get_depth()
 
-
+print("backimg =" + str(backimg.dtype))
 gray = cv2.cvtColor(backimg, cv2.COLOR_BGR2GRAY)
+print("gray =" + str(gray.dtype))
 thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
-
+print("tresh= " + str(thresh.dtype))
 # Find contours and sort using contour area
 cnts = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 cnts = cnts[0] if len(cnts) == 2 else cnts[1]

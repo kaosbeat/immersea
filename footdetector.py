@@ -66,6 +66,11 @@ depth_stream.start()
 ## Use 'help' to get more info
 #help(dev.set_image_registration_mode)
 
+### points detected
+size = 640, 480, 3
+points = np.zeros(size, dtype=np.uint8)
+
+
 def get_depth():
     """
     Returns numpy ndarrays representing the raw and ranged depth images.
@@ -92,6 +97,7 @@ def get_depth():
 
 ## get background image
 backdepth, backimg = get_depth()
+
 ret,backimg = cv2.threshold(backimg,140,255,cv2.THRESH_TOZERO_INV)
 
 
