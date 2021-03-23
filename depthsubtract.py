@@ -1,5 +1,9 @@
 import numpy as np
 import cv2 as cv
+from pythonosc import udp_client
+client = udp_client.SimpleUDPClient("127.0.0.1", 12000)
+
+
 from primesense import openni2#, nite2
 from primesense import _openni2 as c_api
 
@@ -47,6 +51,31 @@ backbuffer = backdepth.copy()
 
 counter = 0
 
+
+# Setup SimpleBlobDetector parameters.
+params = cv.SimpleBlobDetector_Params()
+# Change thresholds
+params.minThreshold = 1000
+params.maxThreshold = 2000
+#filter by color
+# params.filterByColor = True 
+# blobColor = 255
+# Filter by Area.
+# params.filterByArea = True
+# params.minArea = 1200
+# # Filter by Circularity
+# params.filterByCircularity = True
+# params.minCircularity = 0.1
+# # Filter by Convexity
+# params.filterByConvexity = True
+# params.minConvexity = 0.87
+# # Filter by Inertia
+# params.filterByInertia = True
+# params.minInertiaRatio = 0.01
+# params.maxInertiaRatio = 1
+detector = cv.SimpleBlobDetector_create(params)
+
+
 while(1):
     # ret, frame = cap.read()
     dmap,frame = get_depth()
@@ -68,6 +97,16 @@ while(1):
     result = (result > 150)
     result = result.astype(np.uint8)
     result[result != 0] = 255
+    kernel = np.ones((15,15), np.uint8)       # set kernel as 3x3 matrix from numpy
+    #Create erosion and dilation image from the original image
+    erosion = cv.erode(result, kernel, iterations=1)
+
+
+
+
+
+
+
     # print (result.dtype)
     # result[result == True] = 255
     # result.astype(np.uint8)
@@ -76,16 +115,45 @@ while(1):
     # detpoints[x,y]=[255, 255, 255]
     # zeros = np.zeros(detpoints.shape[:2], dtype="uint8")
     # cv.imshow("Red", cv.merge([zeros, zeros, result]))
-    cv.imshow('frame', result)
+    cv.imshow('frame', erosion)
+    inv = cv.bitwise_not(erosion)
 
+    # findcontours 
+    cnts = cv.findContours(inv, cv.RETR_LIST, 
+                    cv.CHAIN_APPROX_SIMPLE)[-2] 
 
-    if (counter % 20 == 0):
-    #     print ('Center pixel is {}mm away'.format(dmap[239,319]))
-    #     print ('backgroundCenter pixel is {}mm away'.format(backbuffer[239,319]))
-        print ('DeltaCenter pixel is {}mm away'.format(deltamap[239,319]))
-        print ('result pixel is {}mm away'.format(result[239,319]))
-        # print(result)
-    counter = counter + 1
+    # filter by area 
+    s1 = 200
+    s2 = 4000
+    xcnts = [] 
+    for i,cnt in enumerate(cnts): 
+        # print(cv.contourArea(cnt))
+        if s1<cv.contourArea(cnt) <s2: 
+            xcnts.append(cnt)
+            M = cv.moments(cnt)
+            cX = int(M["m10"] / M["m00"])
+            cY = int(M["m01"] / M["m00"])
+            # print(cX,cY)
+            client.send_message("/cnt"+ str(i) +"/cX", cX)
+            client.send_message("/cnt"+ str(i) +"/cY", cY)
+
+    # keypoints = detector.detect(inv)
+
+    # # Draw detected blobs as red circles.
+    # # cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle corresponds to the size of blob
+    # im_with_keypoints = cv.drawKeypoints(inv, keypoints, np.array([]), (0,0,255), cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    # # Show keypoints
+    # cv.imshow("Keypoints", im_with_keypoints)
+
+    # if (counter % 20 == 0):
+    # # #     print ('Center pixel is {}mm away'.format(dmap[239,319]))
+    # # #     print ('backgroundCenter pixel is {}mm away'.format(backbuffer[239,319]))
+    # #     # print ('DeltaCenter pixel is {}mm away'.format(deltamap[239,319]))
+    # #     # print ('result pixel is {}mm away'.format(result[239,319]))
+    # #     # print(result)
+    #     # print(keypoints)
+    #     # print (len(xcnts))
+    # counter = counter + 1
 
 
     k = cv.waitKey(30) & 0xff
