@@ -66,9 +66,7 @@ depth_stream.start()
 ## Use 'help' to get more info
 #help(dev.set_image_registration_mode)
 
-### points detected
-size = 640, 480, 3
-points = np.zeros(size, dtype=np.uint8)
+
 
 
 def get_depth():

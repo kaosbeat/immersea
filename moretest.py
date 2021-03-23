@@ -27,8 +27,7 @@ import cv2
 from primesense import openni2#, nite2
 from primesense import _openni2 as c_api
 
-from pythonosc import udp_client
-client = udp_client.SimpleUDPClient("127.0.0.1", 12000)
+
 
 ## Path of the OpenNI redistribution OpenNI2.so or OpenNI2.dll
 # Windows

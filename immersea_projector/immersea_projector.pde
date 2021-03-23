@@ -3,10 +3,10 @@ import oscP5.*;
 
 OscP5 oscP5;
 
-int m1pos[] = {0, 0};
-int m2pos[] = {100, 0};
-int m3pos[] = {100, 100};
-int m4pos[] = {0, 100};
+int m1pos[] = {1, 1}; //TopLeft
+int m2pos[] = {100, 1}; // TopRight
+int m3pos[] = {100, 100}; //BottomRight
+int m4pos[] = {1, 100}; //BottomLeft
 int boxSize = 15;
 boolean overBox1 = false;
 boolean overBox2 = false;
@@ -22,14 +22,14 @@ int yOffset = 0;
 
 
 
-int p1pos[] = {50, 50};
+int p1pos[] = {350, 350};
 int p2pos[] = {60, 60};
 int p3pos[] = {70, 70};
 int p4pos[] = {80, 80};
-int cp1pos[] = {50, 50}; //remapped positions
-int cp2pos[] = {60, 60};
-int cp3pos[] = {70, 70};
-int cp4pos[] = {80, 80};
+float cp1pos[] = {50, 50}; //remapped positions
+float cp2pos[] = {60, 60};
+float cp3pos[] = {70, 70};
+float cp4pos[] = {80, 80};
 
 void setup() {
   size(640, 480, P2D);
@@ -42,11 +42,12 @@ void draw() {
   clear();
   background(0);
   testOverBox();
-  remapFeet();
+  remapFeet(p1pos[0], p1pos[1]);
   drawPadding();
   fill(255, 0, 0);
   rect(p1pos[0], p1pos[1], 15, 15);
-  rect(p2pos[0], p2pos[1], 15, 15);
+  fill(255, 255, 0);
+  rect(cp1pos[0], cp1pos[1], 25, 25);
 }
 void drawPadding(){
   stroke(0,0,255);
@@ -200,9 +201,40 @@ void mouseReleased() {
 }
 
 
-void remapFeet(){
+void remapFeet(int x, int y){
 //m1pos[]
+// calculate weights
+float xmin = min(m1pos[0], m4pos[0]); ///min and max values used in calcs
+float xmax = max(m2pos[0], m3pos[0]);
+float ymin = min(m1pos[1], m2pos[1]);
+float ymax = max(m4pos[1], m3pos[1]);
 
+/////mapping vars
+//if (m1pos[0] == 0) {m1pos[0] = 1;} ////dirty fix div by zero error!!
+//if (m1pos[1] == 0) {m1pos[1] = 1;} 
+//if (m2pos[0] == 0) {m2pos[0] = 1;} 
+//if (m2pos[1] == 0) {m2pos[1] = 1;}
+//if (m4pos[0]- m1pos[0] == 0) { m4pos[0] = m4pos[0] + 1;}
+//if (m3pos[0]- m2pos[0] == 0) { m3pos[0] = m3pos[0] + 1;}
+//if (m2pos[1]- m1pos[1] == 0) { m2pos[1] = m2pos[1] + 1;}
+//if (m3pos[1]- m2pos[0] == 0) { m3pos[1] = m3pos[1] + 1;}
+
+//float minx = xmin + (abs(y-m1pos[1]) / (0.01 + abs(m4pos[1]/(0.01 + m1pos[1]))) * abs(m4pos[0]-m1pos[0])) ;
+//float maxx = xmax - (abs(y-m2pos[1]) / (0.01 + abs(m3pos[1]/(0.01 + m2pos[1]))) * abs(m3pos[0]-m2pos[0])) ;
+
+//float miny = ymin + (abs(x-m1pos[0]) / (0.01 + abs(m2pos[0]/(0.01 + m1pos[0]))) * abs(m2pos[1]-m1pos[1])) ;
+//float maxy = ymax - (abs(x-m2pos[0]) / (0.01 + abs(m3pos[0]/(0.01 + m2pos[0]))) * abs(m3pos[1]-m2pos[1])) ;
+
+float minx = xmin + abs(y-m1pos[1]);
+
+
+println(xmin,xmax,ymin,ymax);
+println("calculated =", minx );
+//println(minx,maxy,miny,maxy);
+
+
+//cp1pos[0] = map(x, 0, width, minx, maxx);
+//cp1pos[1] = map(y, 0, height, miny, maxy);
 
 }
 
