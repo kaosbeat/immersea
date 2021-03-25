@@ -1,7 +1,7 @@
 import numpy as np
 import cv2 as cv
 from pythonosc import udp_client
-client = udp_client.SimpleUDPClient("127.0.0.1", 12000) #processing client
+client = udp_client.SimpleUDPClient("127.0.0.1", 9002) #PD client
 blender = udp_client.SimpleUDPClient("127.0.0.1", 9001) #blender client
 waves = {}
 from primesense import openni2#, nite2
@@ -137,12 +137,15 @@ while(1):
             if ("wave"+str(i) in waves):
                 if (waves["wave"+str(i)][0] - cX > 10 or waves["wave"+str(i)][1] - cY > 10 ): #moved too much, give new wave
                     blender.send_message("/wave"+ str(i) , 1)
+                    client.send_message("/wave"+ str(i) , 1)
+
             else:
                 waves["wave"+str(i)] = (cX,cY)
                 blender.send_message("/wave"+ str(i) , 1)
+                client.send_message("/wave"+ str(i) , 1)
 
-            # client.send_message("/cnt"+ str(i) +"/cX", cX)
-            # client.send_message("/cnt"+ str(i) +"/cY", cY)
+            client.send_message("/cnt"+ str(i) +"/cX", cX)
+            client.send_message("/cnt"+ str(i) +"/cY", cY)
             CX = cX/640 * 6 - 3
             CY = cY/480 * 4 - 2
             blender.send_message("/wave"+ str(i) +"/cX", CX)
