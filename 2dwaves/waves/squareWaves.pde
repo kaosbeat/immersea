@@ -103,6 +103,7 @@ class Squarewave {
       pushMatrix();
       translate(position.x, position.y);
       rotate(rot);
+      //PImage processedImage = Glitch.apply(circleimg, 1, 15);
       image(circleimg, - xsize/2, - ysize/2, xsize, ysize);
       popMatrix();
     }
