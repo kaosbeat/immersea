@@ -1,5 +1,8 @@
 import netP5.*;
 import oscP5.*;
+import codeanticode.syphon.*;
+
+SyphonServer server;
 
 OscP5 oscP5;
 
@@ -35,6 +38,7 @@ void setup() {
   size(640, 480, P2D);
   oscP5 = new OscP5(this, 12000);
   rectMode(RADIUS);
+  server = new SyphonServer(this, "Processing Syphon");
 }
 
 
@@ -48,6 +52,7 @@ void draw() {
   rect(p1pos[0], p1pos[1], 15, 15);
   fill(255, 255, 0);
   rect(cp1pos[0], cp1pos[1], 25, 25);
+  server.sendScreen();
 }
 void drawPadding(){
   stroke(0,0,255);
@@ -228,8 +233,8 @@ float ymax = max(m4pos[1], m3pos[1]);
 float minx = xmin + abs(y-m1pos[1]);
 
 
-println(xmin,xmax,ymin,ymax);
-println("calculated =", minx );
+//println(xmin,xmax,ymin,ymax);
+//println("calculated =", minx );
 //println(minx,maxy,miny,maxy);
 
 
@@ -241,7 +246,7 @@ println("calculated =", minx );
 
 
 void oscEvent(OscMessage theOscMessage) {
-  //print("### received an osc message.");
+  print("### received an osc message.");
   //print(" addrpattern: "+theOscMessage.addrPattern());
   //println(" typetag: "+theOscMessage.typetag());
   //println("time" + millis()/1000 + "___" + theOscMessage.get(0).floatValue());

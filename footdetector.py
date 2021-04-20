@@ -121,7 +121,7 @@ while not done:
     #DEPTH
     dmap,d4d = get_depth()
     # print ('Center pixel is {}mm away'.format(dmap[119,159]))
-    print (dmap)
+    # print (dmap)
     # Read image
  
 
@@ -134,7 +134,7 @@ while not done:
     ## Display the stream syde-by-side
     ret,d4d = cv2.threshold(d4d,140,255,cv2.THRESH_TOZERO_INV)
     subs = d4d - backimg
-    cv2.imshow('depth', subs)
+    cv2.imshow('depth', d4d)
 # end while
 
 ## Release resources 

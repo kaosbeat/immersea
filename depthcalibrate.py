@@ -1,3 +1,10 @@
+## this file can be used for calibration, saving depth buffers
+## if objects are moved in the room, recalibrate using this file!
+
+## buffer will first be saved after 10 seconds, so you have time to move out of view
+# change " unimportandfilenametonotoverwriteimportantones" to something sensible at line 68
+
+
 import numpy as np
 import cv2 as cv
 from pythonosc import udp_client
@@ -6,6 +13,10 @@ blender = udp_client.SimpleUDPClient("127.0.0.1", 9001) #blender client
 waves = {}
 from primesense import openni2#, nite2
 from primesense import _openni2 as c_api
+
+
+import pickle
+import time
 
 # dist ='lib' ##RPi
 dist = 'OpenNI-MacOSX-x64-2.2/Redist/' ## MACOSX
@@ -46,9 +57,28 @@ def redline(img, start, end):
     cv.line(img,start,end,(0, 0, 255),thickness,line_type)
 
 
-backdepth, backimg = get_depth()
+time.sleep(10)
 
+backdepth, backimg = get_depth()
 backbuffer = backdepth.copy()
+backimgbuffer = backimg.copy()
+
+
+
+filename = 'homebackbuffer.pickle'
+outfile = open(filename,'wb')
+pickle.dump(backdepth,outfile)
+outfile.close()
+
+
+# filename = 'backimgwith4feet.pickle'
+# outfile = open(filename,'wb')
+# pickle.dump(backimg,outfile)
+# outfile.close()
+
+
+
+
 
 counter = 0
 
@@ -56,8 +86,8 @@ counter = 0
 # Setup SimpleBlobDetector parameters.
 params = cv.SimpleBlobDetector_Params()
 # Change thresholds
-params.minThreshold = 100
-params.maxThreshold = 2000
+params.minThreshold = 10
+params.maxThreshold = 200
 #filter by color
 # params.filterByColor = True 
 # blobColor = 255
@@ -82,23 +112,29 @@ while(1):
     dmap,frame = get_depth()
     
     deltamap = cv.subtract(backbuffer,dmap)
+    
     # print (deltamap.dtype)
     # closemap = [x < 10] * deltamap
 
-    buffer = (deltamap > 30) * deltamap 
+    buffer = (deltamap > 15) * deltamap 
     buffer = (buffer < 150) * deltamap
-    # result = (result  < 150 ) * result
     result = cv.normalize(buffer, buffer, 0, 255, cv.NORM_MINMAX)
-    result = result.astype(np.uint8)
-    # result[result != 0] = 128
+    cv.imshow('buffer', backimgbuffer)
+    
+    result = cv.normalize(buffer, buffer, 0, 255, cv.NORM_MINMAX)
+    # result = result.astype(np.uint8)
+    result = (result  < 150 ) * result
+    result[result != 0] = 128
+    
     # # result = (result < 50 )
     # deltamap = deltamap.astype(np.uint8)
     # print (result.dtype)
     # result.astype(np.uint8)
-    result = (result > 150)
+    
+    result = (result > 55)
     result = result.astype(np.uint8)
     result[result != 0] = 255
-    kernel = np.ones((15,15), np.uint8)       # set kernel as 3x3 matrix from numpy
+    kernel = np.ones((3,3), np.uint8)       # set kernel as 3x3 matrix from numpy
     #Create erosion and dilation image from the original image
     erosion = cv.erode(result, kernel, iterations=1)
 
@@ -116,7 +152,7 @@ while(1):
     # detpoints[x,y]=[255, 255, 255]
     # zeros = np.zeros(detpoints.shape[:2], dtype="uint8")
     # cv.imshow("Red", cv.merge([zeros, zeros, result]))
-    cv.imshow('frame', erosion)
+    # cv.imshow('frame', erosion)
     inv = cv.bitwise_not(erosion)
 
     # findcontours 
@@ -152,11 +188,11 @@ while(1):
             blender.send_message("/wave"+ str(i) +"/cX", CX)
             blender.send_message("/wave"+ str(i) +"/cY", CY)
 
-    # keypoints = detector.detect(inv)
+    keypoints = detector.detect(inv)
 
     # # Draw detected blobs as red circles.
     # # cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle corresponds to the size of blob
-    # im_with_keypoints = cv.drawKeypoints(inv, keypoints, np.array([]), (0,0,255), cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    im_with_keypoints = cv.drawKeypoints(inv, keypoints, np.array([]), (0,0,255), cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     # # Show keypoints
     # cv.imshow("Keypoints", im_with_keypoints)
 
@@ -167,9 +203,15 @@ while(1):
     # #     # print ('result pixel is {}mm away'.format(result[239,319]))
     # #     # print(result)
     #     # print(keypoints)
-    #     # print (len(xcnts))
-    # counter = counter + 1
+    #     print (len(xcnts))
+    counter = counter + 1
 
+    if (counter == 100):
+        filename = 'home.pickle'
+        outfile = open(filename,'wb')
+        pickle.dump(dmap,outfile)
+        outfile.close()
+        print("saved dmap frame after " + str(counter) + "frames")
 
     k = cv.waitKey(30) & 0xff
     if k == 27:
