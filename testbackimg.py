@@ -1,15 +1,15 @@
 ## calibration parameters
 ## STEP 1 read comments!
 # image cut, see below search for cut_image
-cutY = 0
+cutY = 100
 ## test offline (0) or with camera (1)
 test = 1
 
 ## detection parameters, tweak and copy to immersea.py
-minD = 200  ### minimum distance to consider close to ground (not to low, or you will pickup a lot of noise) (dflt = 500)
+minD = 150  ### minimum distance to consider close to ground (not to low, or you will pickup a lot of noise) (dflt = 500)
 maxD = 400  ### maximum distance (dflt = 800) minD needs to be smaller than maxD
 
-cntrMin = 200 ### minimum contourSize to consider as a blob (dflt = 100)
+cntrMin = 500 ### minimum contourSize to consider as a blob (dflt = 100)
 cntrMax = 20000 ### minimum contourSize to consider as a blob (dflt = 600)
 
 
@@ -129,7 +129,7 @@ def testDepth():
     kernel = np.ones((3,3), np.uint8)   # set kernel as 3x3 matrix from numpy
     #Create erosion and dilation image from the original image
     erosion = cv.erode(buffer, kernel, iterations=1)
-    print(erosion.dtype)
+    # print(erosion.dtype)
     
     cvuint8 = cv.convertScaleAbs(buffer)
     cnts = cv.findContours(cvuint8, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)[-2]
@@ -138,7 +138,7 @@ def testDepth():
     xcnts = []
     img = emptyImg(cutY)
     for i,cnt in enumerate(cnts): 
-        print(cv.contourArea(cnt))
+        # print(cv.contourArea(cnt))
         if s1<cv.contourArea(cnt) <s2: 
             xcnts.append(cnt)
             M = cv.moments(cnt)
@@ -174,5 +174,8 @@ while(1):
     testDepth()
 
     k = cv.waitKey(30) & 0xff
+    print(k)
     if k == 27:
         break
+    if k == "r":
+        print("afeffaafs")

@@ -8,15 +8,15 @@ class FloorFillers {
   PImage ff1 = loadImage("ff1.png");
   PImage ff2 = loadImage("ff2.png");
   PImage ff3 = loadImage("ff3.png");
-  PImage ff4 = loadImage("ff3.png");
-  PImage ff5 = loadImage("ff2.png");
-  PImage ff6 = loadImage("ff1.png");
-  PImage ff7 = loadImage("ff2.png");
-  PImage ff8 = loadImage("ff3.png");
-  PImage ff9 = loadImage("ff1.png");
-  PImage ff10 = loadImage("ff1.png");
+  PImage ff4 = loadImage("ff4.png");
+  PImage ff5 = loadImage("ff5.png");
+  PImage ff6 = loadImage("ff6.png");
+  PImage ff7 = loadImage("ff7.png");
+  PImage ff8 = loadImage("ff8.png");
+  PImage ff9 = loadImage("ff9.png");
+  //PImage ff10 = loadImage("ff1.png");
 
-  PImage fillersimg[] = {ff1, ff2, ff3,ff4,ff5,ff6,ff7,ff8,ff9,ff10};
+  PImage fillersimg[] = {ff1, ff2, ff3,ff4,ff5,ff6,ff7,ff8,ff9};
   FloorFillers() {
     fillers = new ArrayList<Filler>();
   }
@@ -69,7 +69,7 @@ class Filler {
     lifespan = 1;
     decay = decayspeed;
     ffimg = img;
-    circleScale = scale;
+    circleScale = scale *0.6;
     rot = random(3.14);
   }
 

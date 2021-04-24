@@ -10,7 +10,7 @@ class SquareWaves {
   PImage d3 = loadImage("d3.png");
   PImage d4 = loadImage("d4.png");
   PImage d5 = loadImage("d5.png");
-  PImage circles[] = {d1, d2, d3,d4,d5};
+  PImage circles[] = {d1, d2, d3, d4, d5};
   SquareWaves() {
     squarewaves = new ArrayList<Squarewave>();
   }
@@ -33,6 +33,10 @@ class SquareWaves {
         squarewaves.remove(i);
       }
     }
+  }
+
+  void reset() {
+    squarewaves = new ArrayList<Squarewave>();
   }
 }
 
@@ -61,7 +65,7 @@ class Squarewave {
     circleimg = img;
     circleScale = scale;
     rot = random(3.14);
-    t = int(random(5)); 
+    t = int(random(5));
   }
 
   void run() {
@@ -96,7 +100,7 @@ class Squarewave {
       } else if (t == 3) {
         tint(lifespan, 153, lifespan, lifespan);
       } else {
-        tint(255,lifespan);
+        tint(255, lifespan);
       }
       float xsize = circleScale*circleimg.width;
       float ysize = circleScale*circleimg.height;

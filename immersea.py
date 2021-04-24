@@ -2,6 +2,7 @@
 
 import numpy as np
 import cv2 as cv
+import random
 from pythonosc import udp_client
 from pythonosc import osc_message_builder  ### to be able to sned multiple parameters
 
@@ -41,29 +42,36 @@ depth_stream.start()
 ### CONFIG HERE
 startupdelay = 5 ## how long before a backbuffercopy is made (if you need time to move out of the camera view when starting, do it here)
 # image cut, see below search for cut_image
-cutY = 0
+cutY = 100
 ## detection parameters, tweak and copy to immersea.py
-minD = 200  ### minimum distance to consider close to ground (not to low, or you will pickup a lot of noise) (dflt = 500)
-maxD = 400  ### maximum distance (dflt = 800) minD needs to be smaller than maxD
-cntrMin = 200 ### minimum contourSize to consider as a blob (dflt = 100)
+minD = 500  ### minimum distance to consider close to ground (not to low, or you will pickup a lot of noise) (dflt = 500)
+maxD = 800  ### maximum distance (dflt = 800) minD needs to be smaller than maxD
+cntrMin = 100 ### minimum contourSize to consider as a blob (dflt = 100)
 cntrMax = 20000 ###  minimum contourSize to consider as a blob (dflt = 600)
 
 ## experience parameters
-wigglespace = 5 #how much can you move your foot before a new note is sent
+wigglespace = 15 #how much can you move your foot before a new note is sent
 waves = {}
+
 lastfeet = []
 stage = 0 ## startstage, change to do debugging, 0 == idle
 shutdowntimeout = 10 ## if no foot has been seen for shutdowntimeout seconds, switch to stage 0
-stage1time = 50 #how long does stage 1 take in seconds?
-stage2time = stage1time + 5
-stage3time = stage2time + 5
-
-
+stage1time = 90 #how long does stage 1 take in seconds?
+stage2time = stage1time + 6 #how long does stage 2 take in seconds?
+stage3time = stage2time + 120
+stage4time = stage3time + 10
+stage5time = stage4time + 120
+stage6time = stage5time + 30
+opacity = 0 #number of detected steps to fade opacity to 0 at stage 5
+sharpen = 1
+angle = 0
+anglestep = 0.001
 ## comunication config
 # client = udp_client.SimpleUDPClient("127.0.0.1", 9002) #PD client
 # blender = udp_client.SimpleUDPClient("127.0.0.1", 9001) #blender client
 processing = udp_client.SimpleUDPClient("127.0.0.1", 12000) #processing client
-
+millumin = udp_client.SimpleUDPClient("127.0.0.1", 9000) #millumin client
+coge = udp_client.SimpleUDPClient("127.0.0.1", 1235) #coge client
 
 class MidiInputHandler(object):
     def __init__(self, port):
@@ -118,6 +126,10 @@ def testDepth():
 def processFeet(feet):
     global lastfeet
     global wigglespace
+    global opacity
+    global sharpen
+    global angle
+    global anglestep
     newmask = []
     gonemask = []
     #feet gone?
@@ -142,10 +154,53 @@ def processFeet(feet):
                     if ( ((lf[0] - f[0]) < wigglespace) and ((lf[1] - f[1]) < wigglespace) ):
                         newFound = False
             if newFound:
-                # print("new " +str(i) + " found" + str(f[0]) + "," + str(f[1]))
-                note_on = [0x90, 60, 112] # channel 1, middle C, velocity 112
-                midiout.send_message(note_on)
-                processing.send_message("/foot", [f[0], f[1]])
+                # print("new " +str(i) + " found" + str(f[0]) + "," + str(f[1]) +"stage = " + str(stage))
+                if (stage == 1):
+                    # note = random.randint(60,62)
+                    note = 60
+                    note_on = [0x90, note, 100] # channel 1, middle C, velocity 112
+                    midiout.send_message(note_on)
+                if (stage == 3):
+                    note = random.randint(63,66)
+                    note_on = [0x90, note, 100] # channel 1, middle C, velocity 112
+                    midiout.send_message(note_on)
+                if (stage == 5):
+                    note = random.randint(67,72)
+                    note_on = [0x90, note, 100] # channel 1, middle C, velocity 112
+                    midiout.send_message(note_on)
+                    opacity +=2
+                    # print(opacity)
+                    millumin.send_message("/millumin/layer/opacity/1", opacity)
+                footX = 640 - f[0] 
+                footY = 480 - f[1]
+                processing.send_message("/foot", [footX, footY])
+                
+                if (stage == 5):
+                    if angle > 1 or angle < -1:
+                        anglestep = -anglestep
+                    angle += anglestep
+                    shiftx = footX/640
+                    shifty = footY/(480-cutY)
+
+                    coge.send_message("/sharpen", sharpen)
+                    coge.send_message("/angle", angle)
+                    # coge.send_message("/shiftx", shiftx)
+                    # coge.send_message("/shifty", shifty)
+                   
+                if (stage == 6):
+                    opacity -= 1
+                    print (opacity)
+                    millumin.send_message("/millumin/layer/opacity/1", opacity)
+                    millumin.send_message("/millumin/layer/opacity/2", opacity)
+                    op = int((opacity/100*66) + 40)
+                    
+                    if (op > 106):
+                        op = 106
+                    if (op < 40):
+                        op = 40
+                    
+                    control = [0xb0, 0x74, op]
+                    midiout.send_message(control)
                 
 
     lastfeet = feet
@@ -176,6 +231,10 @@ backbuffer = backdepth.copy()
 counter = 0
 starttime = time.time() ## time the cycle is first started.
 feettime = starttime
+processing.send_message("/stage", 0) ### black!!!
+millumin.send_message("/millumin/layer/opacity/1", 0) #cogelayer
+millumin.send_message("/millumin/layer/opacity/2", 100) #processinglayer
+
 
 while(1):
     if (len(lastfeet) == 0 and stage != 0):
@@ -183,27 +242,64 @@ while(1):
         zerotime = time.time() - feettime
         if (zerotime > shutdowntimeout):
             stage = 0 ## shut down the experience
-            processing.send_message("/stage", 0)
+            processing.send_message("/stage", 0) ### black!!!
+            note_on = [0x90, 0, 100] # channel 1, middle C, velocity 112
+            midiout.send_message(note_on)
     if (len(lastfeet) !=0):
         feettime = time.time() 
+
     if (stage == 0 and len(lastfeet) !=0):
+        wigglespace = 10
         starttime = time.time()
         stage = 1
-        processing.send_message("/stage", 1)
-    if ( ((time.time() - starttime) > stage1time) and stage == 1 ) :
-        stage = 2
-        processing.send_message("/stage", 2)
-    if ( ((time.time() - starttime) > stage2time) and stage == 2 ) :
-        stage = 3
-        processing.send_message("/stage", 3)
-    if ( ((time.time() - starttime) > stage3time) and stage == 3 ) :
-        stage = 4
-        processing.send_message("/stage", 4)
+        note_on = [0x90, 1, 100] # channel 1, middle C, velocity 112
+        midiout.send_message(note_on)
+        control = [0xb0, 0x74, 106]
+        midiout.send_message(control)
+        millumin.send_message("/millumin/layer/opacity/1", 0)
+        millumin.send_message("/millumin/layer/opacity/2", 100)            
+        processing.send_message("/stage", 1) ### A_floorfiller
 
+    if ( ((time.time() - starttime) > stage1time) and stage == 1 ) :
+        wigglespace = 10
+        stage = 2
+        note_on = [0x90, 2, 100] # channel 1, middle C, velocity 112
+        midiout.send_message(note_on)
+        processing.send_message("/stage", 2)  ### B_FirstWave
+        
+
+    if ( ((time.time() - starttime) > stage2time) and stage == 2 ) :
+        wigglespace = 10
+        stage = 3
+        processing.send_message("/stage", 3)  ### C_CircleWaves
+
+    if ( ((time.time() - starttime) > stage3time) and stage == 3 ) :
+        wigglespace = 10
+        stage = 4
+        note_on = [0x90, 3, 100] # channel 1, middle C, velocity 112
+        midiout.send_message(note_on)
+        processing.send_message("/stage", 4)  ### D_linewaves
+
+    if ( ((time.time() - starttime) > stage4time) and stage == 4 ) :  
+        wigglespace = 10
+        # coge.send_message("/opacity", 1)
+        stage = 5
+        processing.send_message("/stage", 5)  ### E_squarewaves
+
+    if ( ((time.time() - starttime) > stage5time) and stage == 5 ) :
+        # coge.send_message("/opacity", 1)
+        stage = 6
+        wigglespace = 15
+        opacity = 100
+        millumin.send_message("/millumin/layer/opacity/1", 100)
+        millumin.send_message("/millumin/layer/opacity/2", 100)
+        processing.send_message("/stage", 6)  ### F_reset processing, focus on CoGe
+    
+    
     dmap = getDepth()
     processFeet(testDepth())
     # print(feettime, starttime)
-
+    # print(lastfeet)
     k = cv.waitKey(30) & 0xff
     if k == 27:
         break

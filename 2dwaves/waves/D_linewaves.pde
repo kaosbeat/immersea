@@ -36,7 +36,18 @@ class LineWaves {
       }
     }
   }
+  
+  void reset() {
+    linewaves = new ArrayList<Linewave>();
+  }
+ void fadeAll() {
+    for (int i = 0; i <= linewaves.size()-1; i++) {
+      Linewave p = linewaves.get(i);
+      p.opacity = ((p.opacity*100) - 0.4)/100;
+    }
+  }
 }
+
 
 
 // A simple Particle class
@@ -53,20 +64,22 @@ class Linewave {
   float rot;
   int t;
   int index;
-
+  float opacity;
+  
   Linewave(PVector l, PImage img, int speed, float decayspeed, int index, PVector v) {
-    acceleration = new PVector(0, 0.05);
+    acceleration = new PVector(0.05, 0);
     //velocity = new PVector(random(-1, 1), random(-2, 0));
     velocity = v.copy();
     position = l.copy();
     lifespan = 255;
-    decay = 0.5 + decayspeed;
+    decay = 0.7 + decayspeed;
     //prelife = speed*index;
     prelife = 0;
     lineimg = img;
-    lineScale = 0.5;
+    lineScale = 0.7;
     rot = random(3.14);
     t = int(random(5));
+    opacity = 1;
   }
 
   void run() {
@@ -77,11 +90,12 @@ class Linewave {
   // Method to update position
   void update() {
     //circleScale += 0.001;
+    
     float y = position.y;
     float x = position.x;
     y = y/height * 10;
     x = x/width * 50;
-    acceleration.x = sin(abs(x))*random(1);
+    acceleration.x = 0.6*(sin(abs(x))*random(1));
     acceleration.y = 0.01*(sin(abs(y))+0.01);
     velocity.add(acceleration);
     position.add(velocity);
@@ -98,7 +112,7 @@ class Linewave {
     //fill(255, lifespan);
     //ellipse(position.x, position.y, 8, 8);
     if (prelife <= 0 ) {
-      tint(255, lifespan);
+      tint(255, lifespan*opacity);
       pushMatrix();
       translate(position.x, position.y);
       //rotate(rot);
