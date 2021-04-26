@@ -42,10 +42,10 @@ depth_stream.start()
 ### CONFIG HERE
 startupdelay = 5 ## how long before a backbuffercopy is made (if you need time to move out of the camera view when starting, do it here)
 # image cut, see below search for cut_image
-cutY = 100
+cutY = 130
 ## detection parameters, tweak and copy to immersea.py
-minD = 500  ### minimum distance to consider close to ground (not to low, or you will pickup a lot of noise) (dflt = 500)
-maxD = 800  ### maximum distance (dflt = 800) minD needs to be smaller than maxD
+minD = 330  ### minimum distance to consider close to ground (not to low, or you will pickup a lot of noise) (dflt = 500)
+maxD = 540  ### maximum distance (dflt = 800) minD needs to be smaller than maxD
 cntrMin = 100 ### minimum contourSize to consider as a blob (dflt = 100)
 cntrMax = 20000 ###  minimum contourSize to consider as a blob (dflt = 600)
 
@@ -156,8 +156,8 @@ def processFeet(feet):
             if newFound:
                 # print("new " +str(i) + " found" + str(f[0]) + "," + str(f[1]) +"stage = " + str(stage))
                 if (stage == 1):
-                    # note = random.randint(60,62)
-                    note = 60
+                    note = random.randint(60,62)
+                    # note = 60
                     note_on = [0x90, note, 100] # channel 1, middle C, velocity 112
                     midiout.send_message(note_on)
                 if (stage == 3):
@@ -172,7 +172,7 @@ def processFeet(feet):
                     # print(opacity)
                     millumin.send_message("/millumin/layer/opacity/1", opacity)
                 footX = 640 - f[0] 
-                footY = 480 - f[1]
+                footY = 480 - f[1] + cutY
                 processing.send_message("/foot", [footX, footY])
                 
                 if (stage == 5):
@@ -189,15 +189,16 @@ def processFeet(feet):
                    
                 if (stage == 6):
                     opacity -= 1
-                    print (opacity)
+                    # print (opacity)
                     millumin.send_message("/millumin/layer/opacity/1", opacity)
                     millumin.send_message("/millumin/layer/opacity/2", opacity)
-                    op = int((opacity/100*66) + 40)
+                    op = int((opacity/100*106))
                     
                     if (op > 106):
                         op = 106
-                    if (op < 40):
-                        op = 40
+                   
+                    if (op < 0):
+                        op = 0
                     
                     control = [0xb0, 0x74, op]
                     midiout.send_message(control)
@@ -245,11 +246,12 @@ while(1):
             processing.send_message("/stage", 0) ### black!!!
             note_on = [0x90, 0, 100] # channel 1, middle C, velocity 112
             midiout.send_message(note_on)
+            opacity = 0
     if (len(lastfeet) !=0):
         feettime = time.time() 
 
     if (stage == 0 and len(lastfeet) !=0):
-        wigglespace = 10
+        wigglespace = 15
         starttime = time.time()
         stage = 1
         note_on = [0x90, 1, 100] # channel 1, middle C, velocity 112
@@ -261,7 +263,7 @@ while(1):
         processing.send_message("/stage", 1) ### A_floorfiller
 
     if ( ((time.time() - starttime) > stage1time) and stage == 1 ) :
-        wigglespace = 10
+        wigglespace = 5
         stage = 2
         note_on = [0x90, 2, 100] # channel 1, middle C, velocity 112
         midiout.send_message(note_on)
@@ -269,19 +271,19 @@ while(1):
         
 
     if ( ((time.time() - starttime) > stage2time) and stage == 2 ) :
-        wigglespace = 10
+        wigglespace = 15
         stage = 3
         processing.send_message("/stage", 3)  ### C_CircleWaves
 
     if ( ((time.time() - starttime) > stage3time) and stage == 3 ) :
-        wigglespace = 10
+        wigglespace = 15
         stage = 4
         note_on = [0x90, 3, 100] # channel 1, middle C, velocity 112
         midiout.send_message(note_on)
         processing.send_message("/stage", 4)  ### D_linewaves
 
     if ( ((time.time() - starttime) > stage4time) and stage == 4 ) :  
-        wigglespace = 10
+        wigglespace = 15
         # coge.send_message("/opacity", 1)
         stage = 5
         processing.send_message("/stage", 5)  ### E_squarewaves

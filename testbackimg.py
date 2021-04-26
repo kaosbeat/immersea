@@ -1,13 +1,13 @@
 ## calibration parameters
 ## STEP 1 read comments!
 # image cut, see below search for cut_image
-cutY = 100
+cutY = 130
 ## test offline (0) or with camera (1)
 test = 1
 
 ## detection parameters, tweak and copy to immersea.py
-minD = 150  ### minimum distance to consider close to ground (not to low, or you will pickup a lot of noise) (dflt = 500)
-maxD = 400  ### maximum distance (dflt = 800) minD needs to be smaller than maxD
+minD = 230  ### minimum distance to consider close to ground (not to low, or you will pickup a lot of noise) (dflt = 500)
+maxD = 540  ### maximum distance (dflt = 800) minD needs to be smaller than maxD
 
 cntrMin = 500 ### minimum contourSize to consider as a blob (dflt = 100)
 cntrMax = 20000 ### minimum contourSize to consider as a blob (dflt = 600)
@@ -23,6 +23,18 @@ from primesense import _openni2 as c_api
 import numpy as np
 import cv2 as cv
 import pickle
+
+import time
+import rtmidi
+from rtmidi.midiutil import open_midiinput
+
+
+midiout = rtmidi.MidiOut()
+midiin = rtmidi.MidiIn()
+available_out_ports = midiout.get_ports()
+available_in_ports = midiin.get_ports()
+print("out:" + str(available_out_ports))
+print("in" + str(available_in_ports))
 
 
 
@@ -104,7 +116,35 @@ if test == 1:
 
 
 
+class MidiInputHandler(object):
 
+    def __init__(self, port):
+        self.port = port
+        # self._wallclock = time.time()
+
+    def __call__(self, event, data=None):
+        message, deltatime = event
+        # self._wallclock += deltatime
+        # print("[%s] @%0.6f %r" % (self.port, self._wallclock, message))
+        global minD
+        global maxD
+        if (message[1] == 2) :
+            minD = 20 + 3*(message[2])
+            stage = int(message[2]/12)
+            print("stage =" + str(minD))
+            # processing.send_message("/stage", stage)
+        if (message[1] == 3) :
+            maxD = 100 + 5*(message[2])
+            print("maxD =" + str(maxD))
+
+
+if available_in_ports:
+    midiin, port_name = open_midiinput(3)
+    print("Attaching MIDI input callback handler.")
+    midiin.set_callback(MidiInputHandler(port_name))
+else:
+    midiin.open_virtual_port("My virtual input")
+        
 
 # print(cut_image.shape)
 # print(backimgwith2feet.shape)
@@ -145,7 +185,7 @@ def testDepth():
             cX = int(M["m10"] / M["m00"])
             cY = int(M["m01"] / M["m00"])
             redline(img,(cX,cY),(cX+4,cY+4))
-            print(cX,cY) 
+            # print(cX,cY) 
     
     cv.imshow('result3', erosion)
     cv.imshow("Red", img)
@@ -174,7 +214,7 @@ while(1):
     testDepth()
 
     k = cv.waitKey(30) & 0xff
-    print(k)
+    # print(k)
     if k == 27:
         break
     if k == "r":

@@ -20,10 +20,10 @@ print("in" + str(available_in_ports))
 ### CONFIG HERE
 startupdelay = 5 ## how long before a backbuffercopy is made (if you need time to move out of the camera view when starting, do it here)
 # image cut, see below search for cut_image
-cutY = 100
+cutY = 120
 ## detection parameters, tweak and copy to immersea.py
-minD = 500  ### minimum distance to consider close to ground (not to low, or you will pickup a lot of noise) (dflt = 500)
-maxD = 800  ### maximum distance (dflt = 800) minD needs to be smaller than maxD
+minD = 250  ### minimum distance to consider close to ground (not to low, or you will pickup a lot of noise) (dflt = 500)
+maxD = 540  ### maximum distance (dflt = 800) minD needs to be smaller than maxD
 cntrMin = 100 ### minimum contourSize to consider as a blob (dflt = 100)
 cntrMax = 20000 ###  minimum contourSize to consider as a blob (dflt = 600)
 
